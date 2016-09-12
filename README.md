@@ -8,9 +8,11 @@ Ring buffer is a nice data structure which can be used in many applications.
 
 I believe most of you already know what a ring buffer is and how it is typically implemented.
 
-One problem about ring buffers is that they can't always exist on linear address space in memory.
+To use a ring buffer, you have to keep read/write offsets to find where to read/write correctly.
 
-You often have to copy the data out to a linear block in memory first because typical library routines are written assuming that data is completely linear in memory.
+When the write offset becomes larger than the buffer size, it starts again from the zero.
+
+If that happens, you often have to copy the data out to a linear block in memory first because typical library routines are written assuming that data is completely linear in memory.
 
 ### The Magic
 
@@ -24,8 +26,8 @@ To implement two adjacent indentical buffers, you actually need to have only one
 
 If you google about "magic ring buffer", you can find several implementations.
 
-I made an another one because all the implementations which can work on Linux platfrom need temporary files, which degrades performance.
+I wrote my own code because all the implementations which work on Linux platform need temporary files, which degrades performance.
 
-The only drawback is that it works only on Linux platform bacases other Unix platforms doesn't provide a function that is equivalent to 'remap_file_pages' in Linux.
+The only drawback is that it works only on Linux platform bacause other Unix platforms don't provide a function that is equivalent to 'remap_file_pages' in Linux. 
 
 I hope you find it useful. :)
