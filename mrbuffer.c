@@ -28,6 +28,7 @@
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
+/* create mrbuffer whose size equals to "PAGE_SIZE x (2 ^ order)" */
 struct mrbuffer *mrbuffer_alloc(unsigned int order)
 {
 	struct mrbuffer *mrbuf;
@@ -40,6 +41,8 @@ struct mrbuffer *mrbuffer_alloc(unsigned int order)
 	mrbuf->order = order;
 	mrbuf->size = (1UL << order) * page_size;
 
+	/* create memory mapping whose size equals to two times
+	 * the buffer size */
 	mrbuf->vaddr = mmap(NULL, mrbuf->size << 1, PROT_READ | PROT_WRITE, \
 			MAP_ANONYMOUS | MAP_SHARED, -1, 0);
 	if (mrbuf->vaddr == MAP_FAILED)
