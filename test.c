@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
 		data[i] = i & 0xff ;
 
 	mrbuf = mrbuffer_alloc(MRBUF_FLAG_SHMAT, 0);
+//	mrbuf = mrbuffer_alloc(MRBUF_FLAG_MMAP, 0);
 
 	len = mrbuffer_write(mrbuf, LEN, data);
 

@@ -123,8 +123,9 @@ void mrbuffer_free(struct mrbuffer *mrbuf)
 	if (MRBUF_IS_SHMAT(mrbuf)) {
 		shmdt(mrbuf->vaddr);
 		shmdt(mrbuf->vaddr + mrbuf->size);
+	} else if (MRBUF_IS_MMAP(mrbuf)) {
+		munmap(mrbuf->vaddr, mrbuf->size << 1);
 	}
-	munmap(mrbuf->vaddr, mrbuf->size << 1);
 	free(mrbuf);
 }
 
