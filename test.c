@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 	for (i = 0; i < LEN; i++)
 		data[i] = i & 0xff ;
 
-	mrbuf = mrbuffer_alloc(0);
+	mrbuf = mrbuffer_alloc(MRBUF_FLAG_SHMAT, 0);
 
 	len = mrbuffer_write(mrbuf, LEN, data);
 

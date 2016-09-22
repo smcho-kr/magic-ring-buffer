@@ -18,6 +18,8 @@
  */
 
 #include <sys/mman.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -29,10 +31,20 @@
 #endif
 
 /* create mrbuffer whose size equals to "PAGE_SIZE x (2 ^ order)" */
-struct mrbuffer *mrbuffer_alloc(unsigned int order)
+struct mrbuffer *mrbuffer_alloc(unsigned int flags, unsigned int order)
 {
 	struct mrbuffer *mrbuf;
-	long page_size = sysconf(_SC_PAGE_SIZE);;
+	long page_size;
+	int shm_id;
+
+	if (!(flags & ( MRBUF_FLAG_MMAP | MRBUF_FLAG_SHMAT)))
+		return NULL;
+
+#ifdef _SC_PAGESIZE
+    page_size = sysconf( _SC_PAGESIZE );
+#else
+    page_size = getpagesize();
+#endif
 
 	mrbuf = malloc(sizeof(struct mrbuffer));
 	if (mrbuf == NULL)
@@ -40,30 +52,67 @@ struct mrbuffer *mrbuffer_alloc(unsigned int order)
 
 	mrbuf->order = order;
 	mrbuf->size = (1UL << order) * page_size;
+	mrbuf->tail = 0UL;
+	mrbuf->head = 0UL;
+	mrbuf->flags = flags;
 
 	/* create memory mapping whose size equals to two times
 	 * the buffer size */
 	mrbuf->vaddr = mmap(NULL, mrbuf->size << 1, PROT_READ | PROT_WRITE, \
 			MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+
 	if (mrbuf->vaddr == MAP_FAILED)
 		goto mmap_error;
 
-	if (remap_file_pages(mrbuf->vaddr + mrbuf->size, mrbuf->size, 0, 0, 0))
-		goto remap_error;
+	if (MRBUF_IS_MMAP(mrbuf)) {
 
-	mrbuf->tail = 0UL;
-	mrbuf->head = 0UL;
+		if (remap_file_pages(mrbuf->vaddr + mrbuf->size, \
+				mrbuf->size, 0, 0, 0))
+			goto remap_error;
+
+	} else if (MRBUF_IS_SHMAT(mrbuf)) {
+
+		shm_id = shmget(IPC_PRIVATE, mrbuf->size, IPC_CREAT | 0700);
+
+		if (shm_id < 0)
+			goto shmget_error;
+
+		munmap(mrbuf->vaddr, mrbuf->size << 1);
+
+		if (mrbuf->vaddr != shmat(shm_id, mrbuf->vaddr, 0))
+			goto shmat_error;
+
+		if ((mrbuf->vaddr + mrbuf->size) != \
+				shmat(shm_id, mrbuf->vaddr + mrbuf->size, 0))
+			goto shmat2_error;
+
+		if (shmctl(shm_id, IPC_RMID, NULL) < 0)
+			goto shmctl_error;
+	}
 
 	return mrbuf;
 
+shmctl_error:
+	shmdt(mrbuf->vaddr + mrbuf->size);
+
+shmat2_error:
+	shmdt(mrbuf->vaddr);
+	
+shmat_error:
+	shmctl(shm_id, IPC_RMID, NULL);
+
+shmget_error:
 remap_error:
 	munmap(mrbuf->vaddr, mrbuf->size << 1);
 
 mmap_error:
+	memset(mrbuf, 0, sizeof(struct mrbuffer));
 	free(mrbuf);
+	return NULL;
 
 mrbuf_error:
 	return NULL;
+
 }
 
 void mrbuffer_free(struct mrbuffer *mrbuf)
@@ -71,6 +120,10 @@ void mrbuffer_free(struct mrbuffer *mrbuf)
 	if (!mrbuf)
 		return;
 	
+	if (MRBUF_IS_SHMAT(mrbuf)) {
+		shmdt(mrbuf->vaddr);
+		shmdt(mrbuf->vaddr + mrbuf->size);
+	}
 	munmap(mrbuf->vaddr, mrbuf->size << 1);
 	free(mrbuf);
 }
