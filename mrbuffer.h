@@ -33,6 +33,9 @@ struct mrbuffer {
 #define MRBUF_READ_ADDR(x)		(x->vaddr + x->tail)
 #define MRBUF_WRITE_ADDR(x)		(x->vaddr + x->head)
 
+#define MRBUF_READ_OFFSET(x)		(x->tail)
+#define MRBUF_WRITE_OFFSET(x)		(x->head)
+
 #define MRBUF_FULL(x)			(!MRBUF_FREE_LEN(x))
 #define MRBUF_EMPTY(x)			(!MRBUF_DATA_LEN(x))
 
@@ -42,5 +45,7 @@ size_t mrbuffer_bytes_to_write(struct mrbuffer *mrbuf);
 size_t mrbuffer_bytes_to_read(struct mrbuffer *mrbuf);
 size_t mrbuffer_write(struct mrbuffer *mrbuf, size_t len, void *data);
 size_t mrbuffer_read(struct mrbuffer *mrbuf, size_t len, void *data);
+void mrbuffer_give(struct mrbuffer *mrbuf, size_t len);
+void mrbuffer_take(struct mrbuffer *mrbuf, size_t len);
 
 #endif /* _MRBUFFER_H */

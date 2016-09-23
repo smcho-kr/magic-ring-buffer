@@ -188,3 +188,16 @@ size_t mrbuffer_read(struct mrbuffer *mrbuf, size_t len, void *data)
 
 	return bytes_to_read;
 }
+
+size_t mrbuffer_give(struct mrbuffer *mrbuf, size_t len)
+{
+    len = min(len, MRBUF_FREE_LEN(mrbuf));
+    return mrbuf->head = (mrbuf->head + len) % mrbuf->size;
+}
+
+size_t mrbuffer_take(struct mrbuffer *mrbuf, size_t len)
+{
+    len = min(len, MRBUF_DATA_LEN(mrbuf));
+    return mrbuf->tail = (mrbuf->tail + len) % mrbuf->size;
+}
+
