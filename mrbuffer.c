@@ -79,6 +79,9 @@ struct mrbuffer *mrbuffer_alloc(unsigned int flags, unsigned int order)
 
 		munmap(mrbuf->vaddr, mrbuf->size << 1);
 
+		mrbuf->vaddr = sbrk(mrbuf->size << 1);
+		sbrk(-1*(mrbuf->size << 1));
+
 		if (mrbuf->vaddr != shmat(shm_id, mrbuf->vaddr, 0))
 			goto shmat_error;
 
@@ -189,15 +192,15 @@ size_t mrbuffer_read(struct mrbuffer *mrbuf, size_t len, void *data)
 	return bytes_to_read;
 }
 
-size_t mrbuffer_give(struct mrbuffer *mrbuf, size_t len)
+void mrbuffer_give(struct mrbuffer *mrbuf, size_t len)
 {
     len = min(len, MRBUF_FREE_LEN(mrbuf));
-    return mrbuf->head = (mrbuf->head + len) % mrbuf->size;
+    mrbuf->head = (mrbuf->head + len) % mrbuf->size;
 }
 
-size_t mrbuffer_take(struct mrbuffer *mrbuf, size_t len)
+void mrbuffer_take(struct mrbuffer *mrbuf, size_t len)
 {
     len = min(len, MRBUF_DATA_LEN(mrbuf));
-    return mrbuf->tail = (mrbuf->tail + len) % mrbuf->size;
+    mrbuf->tail = (mrbuf->tail + len) % mrbuf->size;
 }
 
