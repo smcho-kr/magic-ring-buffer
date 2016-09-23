@@ -100,6 +100,7 @@ shmat2_error:
 	
 shmat_error:
 	shmctl(shm_id, IPC_RMID, NULL);
+	goto mmap_error;
 
 shmget_error:
 remap_error:
@@ -108,7 +109,6 @@ remap_error:
 mmap_error:
 	memset(mrbuf, 0, sizeof(struct mrbuffer));
 	free(mrbuf);
-	return NULL;
 
 mrbuf_error:
 	return NULL;
