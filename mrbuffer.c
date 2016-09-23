@@ -79,9 +79,6 @@ struct mrbuffer *mrbuffer_alloc(unsigned int flags, unsigned int order)
 
 		munmap(mrbuf->vaddr, mrbuf->size << 1);
 
-		mrbuf->vaddr = sbrk(mrbuf->size << 1);
-		sbrk(-1*(mrbuf->size << 1));
-
 		if (mrbuf->vaddr != shmat(shm_id, mrbuf->vaddr, 0))
 			goto shmat_error;
 
@@ -91,6 +88,7 @@ struct mrbuffer *mrbuffer_alloc(unsigned int flags, unsigned int order)
 
 		if (shmctl(shm_id, IPC_RMID, NULL) < 0)
 			goto shmctl_error;
+
 	}
 
 	return mrbuf;
