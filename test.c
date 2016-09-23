@@ -106,11 +106,11 @@ int main(int argc, char *argv[])
 		printf("write mrbuf using memcpy\n");
 		memcpy(MRBUF_WRITE_ADDR(mrbuf), data, LEN);
 		/* this must be done to update write pointer after every writes */
-		mrbuffer_give(mrbuf, LEN);
+		len = mrbuffer_give(mrbuf, LEN);
 		printf("h:%04lu t:%04lu %04lu\n", \
 			MRBUF_WRITE_OFFSET(mrbuf), \
 			MRBUF_READ_OFFSET(mrbuf), \
-		   	MRBUF_DATA_LEN(mrbuf));
+		   	len);
 	}
 
 	if (!memcmp(mrbuf->vaddr, mrbuf->vaddr + mrbuf->size, mrbuf->size))

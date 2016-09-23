@@ -190,15 +190,21 @@ size_t mrbuffer_read(struct mrbuffer *mrbuf, size_t len, void *data)
 	return bytes_to_read;
 }
 
-void mrbuffer_give(struct mrbuffer *mrbuf, size_t len)
+size_t mrbuffer_give(struct mrbuffer *mrbuf, size_t len)
 {
     len = min(len, MRBUF_FREE_LEN(mrbuf));
+
     mrbuf->head = (mrbuf->head + len) % mrbuf->size;
+
+	return len;
 }
 
-void mrbuffer_take(struct mrbuffer *mrbuf, size_t len)
+size_t mrbuffer_take(struct mrbuffer *mrbuf, size_t len)
 {
     len = min(len, MRBUF_DATA_LEN(mrbuf));
+
     mrbuf->tail = (mrbuf->tail + len) % mrbuf->size;
+
+	return len;
 }
 
